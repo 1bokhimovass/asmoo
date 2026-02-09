@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="uz">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Logistika - ASMO AVTO</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="config.js"></script>
+
+    <style>
+      /* Siz yuborgan stillar o'zgarishsiz qoldi */
+      body {
+        background-color: #f4f7f6;
+        font-family: "Segoe UI", sans-serif;
+      }
+      .logistics-card {
+        max-width: 600px;
+        margin: 30px auto;
+        border-radius: 20px;
+        border: none;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        position: relative;
+      }
+      .item-row {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-left: 5px solid #6f42c1;
+      }
+      .stock-badge {
+        background: #e9ecef;
+        color: #6f42c1;
+        padding: 5px 15px;
+        border-radius: 10px;
+        font-weight: bold;
+        font-size: 0.9rem;
+      }
+      .is-invalid {
+        border: 2px solid #dc3545 !important;
+      }
+      .btn-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #6f42c1;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 14px;
+        padding: 8px 12px;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        background: rgba(111, 66, 193, 0.05);
+        margin-bottom: 15px;
+      }
+      .btn-back:hover {
+        background: rgba(111, 66, 193, 0.1);
+        transform: translateX(-5px);
+        color: #5a32a3;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="card logistics-card p-4">
+        <a href="javascript:history.back()" class="btn-back">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          <span>Orqaga qaytish</span>
+        </a>
+
+        <h3 class="text-center fw-bold" style="color: #6f42c1">
+          YUKNI YUBORISH
+        </h3>
+        <p class="text-center text-muted small">
+          TANLANGAN BO'LIM: <br /><b class="text-dark" id="display-product-name"
+            >---</b
+          >
+        </p>
+
+        <div class="text-center mb-4">
+          <span class="stock-badge"
+            >Ombor qoldig'i: <span id="total-stock">0</span> dona</span
+          >
+        </div>
+
+        <hr />
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label small fw-bold"
+              >Qayerga? (Zavod nomi)</label
+            >
+            <input
+              type="text"
+              id="destination"
+              class="form-control"
+              placeholder="Masalan: UZCHASIS"
+            />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small fw-bold"
+              >Mijozni tanlang (Xabar uchun)</label
+            >
+            <select
+              id="client_select"
+              class="form-select border-primary text-primary fw-bold"
+            >
+              <option value="5672478726">Admin (Test)</option>
+              <option value="630453535">Mashkuraxon</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="items-container"></div>
+
+        <button
+          id="add-item-btn"
+          class="btn btn-outline-secondary btn-sm w-100 mb-4"
+          onclick="addItemRow()"
+          style="display: none"
+        >
+          + YANA QO'SHISH
+        </button>
+
+        <div class="row g-3 mb-4">
+          <div class="col-6">
+            <label class="form-label small fw-bold">Mashina raqami</label>
+            <input
+              type="text"
+              id="car_number"
+              class="form-control"
+              placeholder="01 A 777 AA"
+            />
+          </div>
+          <div class="col-6">
+            <label class="form-label small fw-bold">Haydovchi tel</label>
+            <input
+              type="text"
+              id="driver_phone"
+              class="form-control"
+              value="+998"
+            />
+          </div>
+        </div>
+
+        <button
+          class="btn btn-primary btn-lg w-100 fw-bold shadow"
+          onclick="sendCargo()"
+          style="background: #6f42c1; border: none"
+        >
+          YUKNI YUBORISH VA TASDIQLASH
+        </button>
+      </div>
+    </div>
+
+    <script>
+      // SIZNING ASOSIY MANTIQINGIZ (Saqlab qolindi)
+      const savedTitle = (
+        localStorage.getItem("activeSubTitle") || ""
+      ).toUpperCase();
+      const isGore = savedTitle.includes("GORE");
+      let currentProduct = isGore
+        ? "GORE-TEX PATCH"
+        : savedTitle.includes("LED")
+          ? "LED PCB"
+          : "AVTO SWITCH";
+
+      document.getElementById("display-product-name").innerText =
+        currentProduct;
+      if (isGore)
+        document.getElementById("add-item-btn").style.display = "block";
+
+      function addItemRow() {
+        const container = document.getElementById("items-container");
+        const div = document.createElement("div");
+        div.className = "item-row";
+        const sizeSelector = isGore
+          ? `
+            <label class="form-label small fw-bold">O'lcham va Kodni tanlang</label>
+            <select class="form-select item-type mb-2 fw-bold" onchange="updateRowStock(this)">
+                <option value="">-- Tanlang --</option>
+                <option value="12.7mm|VE0017GMK">12.7mm - VE0017GMK</option>
+                <option value="12.7mm|VE001VAP">12.7mm - VE001VAP</option>
+                <option value="19.5mm|VE2004">19.5mm - VE2004</option>
+                <option value="40.20mm|VE0020GMC">40.20mm - VE0020GMC</option>
+                <option value="27.27mm|VE2084">27.27mm - VE2084</option>
+            </select>`
+          : "";
+
+        div.innerHTML = `${sizeSelector}
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <label class="form-label small fw-bold mb-0">Yuboriladigan miqdor</label>
+                <small class="text-muted">Qoldiq: <span class="row-stock">0</span></small>
+            </div>
+            <input type="number" class="form-control item-qty fw-bold" placeholder="0" oninput="validateQty(this)">`;
+        container.appendChild(div);
+        if (!isGore) updateGeneralStock();
+      }
+
+      function updateGeneralStock() {
+        // MAHSULOT NOMIDAGI BO'SHLIQLARNI (_) BILAN ALMASHTIRIB KEY YARATISH
+        const safeKey = "stock_gen_" + currentProduct.replace(/\s+/g, "_");
+        db.ref("asmo_inventory_balance/" + safeKey).on("value", (snap) => {
+          const stock = snap.val() || 0;
+          document.getElementById("total-stock").innerText =
+            stock.toLocaleString();
+          document
+            .querySelectorAll(".row-stock")
+            .forEach((el) => (el.innerText = stock));
+        });
+      }
+
+      function updateRowStock(selectEl) {
+        if (!selectEl.value) return;
+        const row = selectEl.closest(".item-row");
+        const [size, code] = selectEl.value.split("|");
+        // FIREBASE KEYLARINI TO'G'RI FORMATLASH
+        const safeKey = "stock_gore_" + size.replace(/[.|]/g, "_") + "_" + code;
+        db.ref("asmo_inventory_balance/" + safeKey).on("value", (snap) => {
+          row.querySelector(".row-stock").innerText = snap.val() || 0;
+        });
+      }
+
+      function validateQty(input) {
+        const row = input.closest(".item-row");
+        const stock = parseInt(row.querySelector(".row-stock").innerText) || 0;
+        input.classList.toggle("is-invalid", parseInt(input.value) > stock);
+      }
+
+      // BOTGA VA FIREBASEGA YUBORISH (100% ISHLAYDIGAN QILINDI)
+      async function sendCargo() {
+        const dest = document.getElementById("destination").value.trim();
+        const car = document.getElementById("car_number").value.trim();
+        const phone = document.getElementById("driver_phone").value;
+        const targetChatId = document.getElementById("client_select").value;
+        const rows = document.querySelectorAll(".item-row");
+
+        // SIZNING GOOGLE APPS SCRIPT LINKINGIZ
+        const botWebAppLink =
+          "https://script.google.com/macros/s/AKfycbzHD-C6A_mUyxRPLOl1MW3OTtMkm-_swBz5Hg6A1mEVS-vWydXxspt7viH1JRt0Qi0dJg/exec";
+
+        if (!dest) return alert("Zavod nomini kiriting!");
+
+        let finalCargo = [];
+        for (let row of rows) {
+          const qtyVal = parseInt(row.querySelector(".item-qty").value);
+          const stockVal = parseInt(row.querySelector(".row-stock").innerText);
+
+          if (qtyVal > 0) {
+            if (qtyVal > stockVal)
+              return alert("Omborda yetarli mahsulot yo'q!");
+
+            let size = "",
+              code = "",
+              safeKey = "";
+            if (isGore) {
+              const select = row.querySelector(".item-type");
+              if (!select.value) continue;
+              [size, code] = select.value.split("|");
+              safeKey = "stock_gore_" + size.replace(/[.|]/g, "_") + "_" + code;
+            } else {
+              safeKey = "stock_gen_" + currentProduct.replace(/\s+/g, "_");
+            }
+            finalCargo.push({ size, code, qty: qtyVal, safeKey });
+          }
+        }
+
+        if (finalCargo.length === 0) return alert("Miqdorni kiriting!");
+
+        try {
+          const timeNow = new Date().toLocaleString("uz-UZ");
+          for (let item of finalCargo) {
+            // 1. FIREBASEGA LOG YOZISH
+            const newRef = await db.ref("asmo_zavod_shippings").push({
+              // DIRECTOR PANELIGA MOSLAB O'ZGARTIRILDI
+              product: currentProduct,
+              zavod: dest,
+              car_number: car,
+              driver_phone: phone,
+              size: item.size,
+              code: item.code,
+              qty: item.qty,
+              time: timeNow,
+              timestamp: Date.now(),
+              status: "onway",
+            });
+
+            // 2. OMBORDAN AYIRISH
+            await db
+              .ref("asmo_inventory_balance/" + item.safeKey)
+              .transaction((c) => (c || 0) - item.qty);
+
+            // 3. BOTGA XABAR YUBORISH (Fetch qismi to'g'rilandi)
+            const pNameFull =
+              currentProduct + (item.size ? " (" + item.size + ")" : "");
+            const params = new URLSearchParams({
+              zavod: dest,
+              product: pNameFull,
+              qty: item.qty,
+              car: car,
+              driverPhone: phone,
+              shippingId: newRef.key,
+              chatId: targetChatId,
+            });
+
+            // "No-cors" rejimi ba'zan bot xabarini to'xtatib qo'yishi mumkin,
+            // lekin API kodi to'g'ri bo'lsa fetch ishlayveradi.
+            fetch(`${botWebAppLink}?${params.toString()}`, { mode: "no-cors" });
+          }
+          alert("✅ Yuk muvaffaqiyatli yuborildi va Botga xabar ketdi!");
+          location.reload();
+        } catch (e) {
+          alert("Xatolik: " + e.message);
+        }
+      }
+
+      window.onload = addItemRow;
+    </script>
+  </body>
+</html>

@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="uz">
+  <head>
+    <link rel="manifest" href="manifest.json" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta name="apple-mobile-web-app-title" content="ASMO AVTO" />
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>ASMO AVTO - Boshqaruv Paneli</title>
+
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="config.js"></script>
+
+    <style>
+      :root {
+        --primary-blue: #0d6efd;
+        --success-green: #198754;
+        --info-cyan: #0dcaf0;
+        --purple-log: #6f42c1;
+      }
+      body {
+        background-color: #f0f2f5;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .navbar {
+        background: #1a1d20 !important;
+        padding: 12px 0;
+      }
+      .dept-card {
+        transition: all 0.2s ease;
+        border-radius: 18px;
+        border: none;
+        padding: 15px;
+        background: white;
+        display: flex;
+        align-items: center;
+        height: 100%;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        text-decoration: none;
+        color: #333;
+        cursor: pointer;
+      }
+      .dept-card:active {
+        transform: scale(0.96);
+        background: #f8f9fa;
+      }
+      .dept-icon {
+        width: 70px;
+        height: 70px;
+        min-width: 70px;
+        margin-right: 15px;
+        background: #f8f9fa;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 6px;
+        overflow: hidden;
+      }
+      .dept-icon img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+      .border-production {
+        border-left: 6px solid var(--primary-blue);
+      }
+      .border-archive {
+        border-left: 6px solid var(--info-cyan);
+      }
+      .border-warehouse {
+        border-left: 6px solid var(--success-green);
+      }
+      .border-logistics {
+        border-left: 6px solid var(--purple-log);
+      }
+      .section-title {
+        font-size: 0.85rem;
+        font-weight: 800;
+        color: #666;
+        margin: 20px 0 12px 5px;
+      }
+      .welcome-header {
+        background: white;
+        padding: 25px 0;
+        border-radius: 0 0 25px 25px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+      }
+      .btn-back {
+        width: 42px;
+        height: 42px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: white !important;
+        border-radius: 12px !important;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08) !important;
+        color: #333;
+        border: none;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-dark sticky-top shadow-sm">
+      <div
+        class="container d-flex justify-content-between align-items-center px-3"
+      >
+        <div class="d-flex align-items-center gap-3">
+          <button
+            class="navbar-toggler border-0 p-0"
+            type="button"
+            data-bs-toggle="offcanvas"
+            data-bs-target="#settingsSidebar"
+          >
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <span
+            class="navbar-brand fw-bold m-0"
+            style="font-size: 1rem; letter-spacing: 0.5px"
+            >ASMO AVTO</span
+          >
+        </div>
+        <button
+          class="btn btn-sm btn-outline-light opacity-75"
+          onclick="chiqish()"
+        >
+          Chiqish
+        </button>
+      </div>
+    </nav>
+
+    <div
+      class="offcanvas offcanvas-start"
+      tabindex="-1"
+      id="settingsSidebar"
+      style="width: 300px; border-radius: 0 20px 20px 0"
+    >
+      <div class="offcanvas-header border-bottom">
+        <h5 class="fw-bold m-0">⚙️ Sozlamalar</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="offcanvas"
+        ></button>
+      </div>
+      <div class="offcanvas-body">
+        <div id="adminOnlySection" class="d-none mb-4">
+          <label class="small fw-bold text-muted text-uppercase mb-2 d-block"
+            >Direktor bo'limi</label
+          >
+          <a href="direktor.html" class="btn btn-dark w-100 py-2 mb-3"
+            >📊 Direktor Paneli</a
+          >
+          <hr />
+        </div>
+
+        <label class="small fw-bold text-muted text-uppercase mb-2 d-block"
+          >Zavodlar (Mijozlar)</label
+        >
+        <div class="input-group mb-2">
+          <input
+            type="text"
+            id="newZavodInput"
+            class="form-control form-control-sm"
+            placeholder="Yangi zavod nomi"
+          />
+          <button class="btn btn-primary btn-sm" onclick="addZavod()">+</button>
+        </div>
+        <ul id="zavodList" class="list-group list-group-flush mb-4 small"></ul>
+      </div>
+    </div>
+
+    <div class="welcome-header">
+      <div class="container">
+        <h2 class="fw-bold mb-1">Boshqaruv Paneli</h2>
+        <p class="text-muted mb-0 small">Ishlab chiqarish va ombor nazorati</p>
+      </div>
+    </div>
+
+    <main class="container pb-5">
+      <div id="productSection">
+        <h6 class="section-title text-uppercase">📦 MAHSULOTLAR</h6>
+        <div class="row g-3" id="dynamicCategories">
+          <div
+            class="col-12 col-md-4"
+            onclick="openSub('Gore-Tex Patch', 'Gore')"
+          >
+            <div class="dept-card border-production">
+              <div class="dept-icon">
+                <img src="https://i.postimg.cc/XNx1Z4bx/gore.png" />
+              </div>
+              <div>
+                <h5 class="fw-bold mb-0">Gore-Tex Patch</h5>
+                <small class="text-muted">Lentalash va test</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-4" onclick="openSub('LED PCB', 'LED')">
+            <div class="dept-card border-production">
+              <div class="dept-icon">
+                <img src="https://i.postimg.cc/wTZVJBbw/led.jpg" />
+              </div>
+              <div>
+                <h5 class="fw-bold mb-0">LED PCB</h5>
+                <small class="text-muted">Elektr va yig‘uv</small>
+              </div>
+            </div>
+          </div>
+          <div
+            class="col-12 col-md-4"
+            onclick="openSub('Avto Switch', 'Switch')"
+          >
+            <div class="dept-card border-production">
+              <div class="dept-icon">
+                <img src="https://i.postimg.cc/wMHK9VDN/swittch.png" />
+              </div>
+              <div>
+                <h5 class="fw-bold mb-0">Switch Stop Pedal</h5>
+                <small class="text-muted">Mexanik sinov</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="subSection" class="d-none">
+        <div class="d-flex align-items-center mb-4">
+          <button class="btn btn-back me-3" onclick="goBack()">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              fill="currentColor"
+              viewBox="0 0 16 16"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"
+              />
+            </svg>
+          </button>
+          <h4 class="fw-bold m-0" id="subTitle"></h4>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-12 col-md-6">
+            <a href="./ombor.html" class="dept-card border-production"
+              ><div class="dept-icon fs-2">🏗️</div>
+              <div><h5 class="fw-bold mb-0">Xomashyo kirim ombori</h5></div></a
+            >
+          </div>
+          <div class="col-12 col-md-6">
+            <a href="./ishlab-chiqarish.html" class="dept-card border-archive"
+              ><div class="dept-icon fs-2">🏬</div>
+              <div><h5 class="fw-bold mb-0">Ishlab chiqarish</h5></div></a
+            >
+          </div>
+          <div class="col-12 col-md-6">
+            <a href="baza.html" class="dept-card border-warehouse"
+              ><div class="dept-icon fs-2">📦</div>
+              <div><h5 class="fw-bold mb-0">Tayyor mahsulot ombori</h5></div></a
+            >
+          </div>
+          <div class="col-12 col-md-6">
+            <a href="logistika.html" class="dept-card border-logistics"
+              ><div class="dept-icon fs-2">🚚</div>
+              <div><h5 class="fw-bold mb-0">Logistika</h5></div></a
+            >
+          </div>
+          <div class="col-12 col-md-6">
+            <a href="ombor-tarixi.html" class="dept-card border-archive"
+              ><div class="dept-icon fs-2">📜</div>
+              <div>
+                <h5 class="fw-bold mb-0">Ombor tarixi</h5>
+                <small class="text-muted">Amallar arxivi</small>
+              </div></a
+            >
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      // 1. AUTH VA YO'NALTIRISH
+      auth.onAuthStateChanged((user) => {
+        if (!user) {
+          window.location.href = "login.html";
+        } else if (user.email === "direktor@asmo.uz") {
+          // Direktor faqat direktor.html da bo'lishi kerak
+          window.location.href = "direktor.html";
+        }
+      });
+
+      function chiqish() {
+        if (confirm("Tizimdan chiqmoqchimisiz?")) {
+          auth.signOut().then(() => {
+            window.location.href = "login.html";
+          });
+        }
+      }
+
+      // 2. NAVIGATSIYA LOGIKASI
+      function openSub(title, type) {
+        document.getElementById("productSection").classList.add("d-none");
+        document.getElementById("subSection").classList.remove("d-none");
+        document.getElementById("subTitle").innerText = title;
+        localStorage.setItem("selectedProduct", type);
+        localStorage.setItem("activeSubTitle", title);
+        localStorage.setItem("activeSubStatus", "open");
+        window.scrollTo(0, 0);
+      }
+
+      function goBack() {
+        localStorage.removeItem("activeSubTitle");
+        localStorage.removeItem("activeSubStatus");
+        localStorage.removeItem("selectedProduct");
+        document.getElementById("subSection").classList.add("d-none");
+        document.getElementById("productSection").classList.remove("d-none");
+      }
+
+      // 3. ZAVODLARNI BOSHQARISH
+      const settingsRef = db.ref("asmo_settings");
+
+      function addZavod() {
+        const name = document.getElementById("newZavodInput").value.trim();
+        if (name) {
+          settingsRef.child("zavodlar").push({ name: name.toUpperCase() });
+          document.getElementById("newZavodInput").value = "";
+        }
+      }
+
+      function deleteZavod(key) {
+        if (confirm("Ushbu zavodni o'chirmoqchimisiz?"))
+          settingsRef.child("zavodlar").child(key).remove();
+      }
+
+      // 4. SAHIFA YUKLANGANDA
+      window.onload = function () {
+        const status = localStorage.getItem("activeSubStatus");
+        const title = localStorage.getItem("activeSubTitle");
+        if (status === "open" && title) {
+          document.getElementById("productSection").classList.add("d-none");
+          document.getElementById("subSection").classList.remove("d-none");
+          document.getElementById("subTitle").innerText = title;
+        }
+
+        // Zavodlar ro'yxatini yuklash
+        settingsRef.child("zavodlar").on("value", (snap) => {
+          const list = document.getElementById("zavodList");
+          if (!list) return;
+          list.innerHTML = "";
+          snap.forEach((child) => {
+            list.innerHTML += `<li class="list-group-item d-flex justify-content-between align-items-center px-0 border-0 border-bottom bg-transparent">
+              ${child.val().name}
+              <button class="btn btn-sm text-danger" onclick="deleteZavod('${child.key}')">&times;</button>
+            </li>`;
+          });
+        });
+      };
+    </script>
+  </body>
+</html>

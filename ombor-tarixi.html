@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="uz">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ombor Arxivi - ASMO AVTO</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="config.js"></script>
+
+    <style>
+      body {
+        background-color: #f4f7f6;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      }
+      .card {
+        border-radius: 12px;
+        border: none;
+        overflow: hidden;
+      }
+      .card-header {
+        font-size: 1.1rem;
+        letter-spacing: 0.5px;
+      }
+      .table thead th {
+        background-color: #f8f9fa;
+        font-size: 0.85rem;
+        color: #666;
+        text-align: center;
+      }
+      .table tbody td {
+        text-align: center;
+        vertical-align: middle;
+      }
+      .badge-custom {
+        font-size: 0.9rem;
+        padding: 5px 10px;
+      }
+
+      /* MOBIL MOSLASHUVCHANLIK (MOBILE RESPONSIVE) */
+      @media (max-width: 768px) {
+        .table thead {
+          display: none; /* Sarlavhalarni yashiramiz */
+        }
+        .table tbody tr {
+          display: block;
+          margin-bottom: 20px;
+          border: 1px solid #eee;
+          border-radius: 10px;
+          background: #fff;
+          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+          padding: 10px;
+        }
+        .table tbody td {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          text-align: right;
+          border-bottom: 1px dashed #f0f0f0;
+          padding: 8px 5px;
+        }
+        .table tbody td:last-child {
+          border-bottom: none;
+        }
+        /* Chap tomondan nomlarni chiqarish */
+        .table tbody td::before {
+          content: attr(data-label);
+          font-weight: bold;
+          text-transform: uppercase;
+          font-size: 0.75rem;
+          color: #888;
+          margin-right: 15px;
+          text-align: left;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container py-4">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold m-0 h4">📊 Ombor Arxivi</h2>
+        <a href="index.html" class="btn btn-dark shadow-sm px-4">orqaga</a>
+      </div>
+
+      <div class="card mb-5 shadow-sm border-success">
+        <div class="card-header bg-success text-white fw-bold">
+          📥 XOMASHYO KIRIM
+        </div>
+        <div class="table-responsive p-2">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Sana</th>
+                <th>Mahsulot</th>
+                <th>Ta'minotchi</th>
+                <th>Partiya</th>
+                <th>Transport</th>
+                <th>Miqdor</th>
+                <th>Mas'ul</th>
+              </tr>
+            </thead>
+            <tbody id="table-kirim"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card mb-5 shadow-sm border-danger">
+        <div class="card-header bg-danger text-white fw-bold">
+          📤 XOMASHYO CHIQIM
+        </div>
+        <div class="table-responsive p-2">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Sana</th>
+                <th>Mahsulot</th>
+                <th>Sabab</th>
+                <th>Miqdor</th>
+                <th>Mas'ul</th>
+              </tr>
+            </thead>
+            <tbody id="table-chiqim"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card mb-5 shadow-sm border-primary">
+        <div class="card-header bg-primary text-white fw-bold">
+          🏭 ISHLAB CHIQARILGAN
+        </div>
+        <div class="table-responsive p-2">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Sana</th>
+                <th>Mahsulot</th>
+                <th>Izoh</th>
+                <th>Miqdor</th>
+                <th>Mas'ul</th>
+              </tr>
+            </thead>
+            <tbody id="table-tayyor"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card mb-5 shadow-sm border-warning">
+        <div class="card-header bg-warning text-dark fw-bold">
+          💰 SOTUV (MIJOZLAR)
+        </div>
+        <div class="table-responsive p-2">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Sana</th>
+                <th>Mahsulot</th>
+                <th>Mijoz</th>
+                <th>Miqdor</th>
+                <th>Mas'ul</th>
+              </tr>
+            </thead>
+            <tbody id="table-sotuv"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      db.ref("asmo_ombor_records").on("value", (snapshot) => {
+        const data = snapshot.val();
+        const tableIds = [
+          "table-kirim",
+          "table-chiqim",
+          "table-tayyor",
+          "table-sotuv",
+        ];
+        tableIds.forEach((id) => (document.getElementById(id).innerHTML = ""));
+
+        if (data) {
+          Object.values(data)
+            .reverse()
+            .forEach((item) => {
+              let row = "";
+              if (item.type === "Xomashyo Kirim") {
+                row = `<tr>
+                <td data-label="Sana"><small>${item.time}</small></td>
+                <td data-label="Mahsulot"><b>${item.product}</b></td>
+                <td data-label="Ta'minotchi">${item.info || "-"}</td>
+                <td data-label="Partiya"><span class="badge bg-light text-dark border">${
+                  item.batch || "-"
+                }</span></td>
+                <td data-label="Transport"><span class="text-primary">${
+                  item.transport || "-"
+                }</span></td>
+                <td data-label="Miqdor"><span class="badge bg-success badge-custom">+${
+                  item.qty
+                }</span></td>
+                <td data-label="Mas'ul"><small class="fw-bold">${
+                  item.responsible || "-"
+                }</small></td>
+              </tr>`;
+                document.getElementById("table-kirim").innerHTML += row;
+              } else if (item.type === "Xomashyo Chiqim") {
+                row = `<tr>
+                <td data-label="Sana"><small>${item.time}</small></td>
+                <td data-label="Mahsulot"><b>${item.product}</b></td>
+                <td data-label="Sabab">${item.info || "-"}</td>
+                <td data-label="Miqdor"><span class="badge bg-danger badge-custom">-${
+                  item.qty
+                }</span></td>
+                <td data-label="Mas'ul"><small class="fw-bold">${
+                  item.responsible || "-"
+                }</small></td>
+              </tr>`;
+                document.getElementById("table-chiqim").innerHTML += row;
+              } else if (item.type === "Tayyor Mahsulot") {
+                row = `<tr>
+                <td data-label="Sana"><small>${item.time}</small></td>
+                <td data-label="Mahsulot"><b>${item.product}</b></td>
+                <td data-label="Izoh">${item.info || "-"}</td>
+                <td data-label="Miqdor"><span class="badge bg-primary badge-custom">${
+                  item.qty
+                }</span></td>
+                <td data-label="Mas'ul"><small class="fw-bold">${
+                  item.responsible || "-"
+                }</small></td>
+              </tr>`;
+                document.getElementById("table-tayyor").innerHTML += row;
+              } else if (item.type === "Sotuv") {
+                row = `<tr>
+                <td data-label="Sana"><small>${item.time}</small></td>
+                <td data-label="Mahsulot"><b>${item.product}</b></td>
+                <td data-label="Mijoz">${item.info || "-"}</td>
+                <td data-label="Miqdor"><span class="badge bg-warning text-dark badge-custom">${
+                  item.qty
+                }</span></td>
+                <td data-label="Mas'ul"><small class="fw-bold">${
+                  item.responsible || "-"
+                }</small></td>
+              </tr>`;
+                document.getElementById("table-sotuv").innerHTML += row;
+              }
+            });
+        }
+      });
+    </script>
+  </body>
+</html>

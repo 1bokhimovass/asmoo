@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="uz">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Baza - ASMO AVTO</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="config.js"></script>
+
+    <style>
+      body {
+        background-color: #f4f7f6;
+        font-family: "Segoe UI", sans-serif;
+      }
+      .main-card {
+        border-radius: 20px;
+        border: none;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+      }
+      .sticky-header {
+        position: sticky;
+        top: 0;
+        background: #f4f7f6;
+        z-index: 100;
+        padding: 15px 0;
+      }
+      .stock-badge-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 10px;
+      }
+      .stock-mini-badge {
+        background: #fff;
+        padding: 5px 12px;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        border: 1px solid #dee2e6;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      }
+      .text-summa {
+        color: #198754;
+        font-weight: bold;
+      }
+      .back-btn {
+        text-decoration: none;
+        color: #333;
+        margin-right: 15px;
+        font-size: 1.2rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sticky-header mb-3">
+      <div class="container">
+        <div class="d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center">
+            <a href="index.html" class="back-btn">⬅️</a>
+            <h2 class="fw-bold mb-0">📊 <span id="baza-title">Baza</span></h2>
+          </div>
+          <div class="fw-bold">
+            Jami:
+            <span id="total-stock-display" class="badge bg-primary">0</span>
+            dona
+          </div>
+        </div>
+        <div id="size-stocks" class="stock-badge-container"></div>
+      </div>
+    </div>
+
+    <div class="container pb-5">
+      <div class="card main-card shadow-sm">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0 text-center">
+            <thead class="table-light">
+              <tr>
+                <th class="py-3">Sana</th>
+                <th class="py-3">Mahsulot / Ma'lumot</th>
+                <th class="py-3">Partiya</th>
+                <th class="py-3">Kirim</th>
+                <th class="py-3">Summa</th>
+              </tr>
+            </thead>
+            <tbody id="baza-table">
+              <tr>
+                <td colspan="5" class="py-5 text-center">Yuklanmoqda...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const savedTitle = (
+        localStorage.getItem("activeSubTitle") || ""
+      ).toUpperCase();
+      const savedType = localStorage.getItem("selectedProduct") || "";
+
+      let filterName =
+        savedTitle.includes("GORE") || savedType === "Gore"
+          ? "GORE-TEX PATCH"
+          : "LED PCB";
+      if (!savedTitle.includes("GORE") && !savedTitle.includes("LED"))
+        filterName = "AVTO SWITCH";
+
+      document.getElementById("baza-title").innerText = filterName + " : Ombor";
+
+      function updateUI() {
+        db.ref("asmo_all_history").once("value", (hSnap) => {
+          let sizeStats = {};
+          let totalQty = 0;
+          let records = [];
+          const isGore = filterName.includes("GORE");
+
+          if (hSnap.exists()) {
+            hSnap.forEach((child) => {
+              const item = child.val();
+              if (item.product === filterName) {
+                // Guruhlash kalitini aniqlash
+                const sKey = isGore
+                  ? `${item.size} (${item.code})`
+                  : filterName;
+
+                if (!sizeStats[sKey]) sizeStats[sKey] = 0;
+                sizeStats[sKey] += parseFloat(item.qty || 0);
+
+                totalQty += parseFloat(item.qty || 0);
+                records.push(item);
+              }
+            });
+          }
+
+          db.ref("asmo_logistika_history").once("value", (lSnap) => {
+            if (lSnap.exists()) {
+              lSnap.forEach((child) => {
+                const s = child.val();
+                if (s.product === filterName) {
+                  const sKey =
+                    isGore && s.item
+                      ? s.item.replace("|", " (") + ")"
+                      : filterName;
+                  if (sizeStats[sKey] !== undefined) {
+                    sizeStats[sKey] -= parseFloat(s.qty || 0);
+                    totalQty -= parseFloat(s.qty || 0);
+                  }
+                }
+              });
+            }
+
+            // UI: O'lchamlar bo'yicha qoldiq (Faqat Gore uchun)
+            const sizeContainer = document.getElementById("size-stocks");
+            sizeContainer.innerHTML = "";
+            if (isGore) {
+              for (const [key, val] of Object.entries(sizeStats)) {
+                sizeContainer.innerHTML += `<div class="stock-mini-badge"><b>${key}:</b> ${val}</div>`;
+              }
+            }
+            document.getElementById("total-stock-display").innerText =
+              totalQty.toLocaleString();
+
+            // Jadval: Ma'lumotlarni chiqarish
+            const table = document.getElementById("baza-table");
+            if (records.length > 0) {
+              table.innerHTML = records
+                .reverse()
+                .map(
+                  (item) => `
+                <tr>
+                  <td><small class="text-muted">${item.time}</small></td>
+                  <td>
+                    <strong>${item.product}</strong>
+                    ${
+                      isGore && item.size
+                        ? `<br><small class="text-secondary">${item.size} / ${item.code}</small>`
+                        : ""
+                    }
+                  </td>
+                  <td><span class="badge bg-light text-dark border">${
+                    item.batch || "-"
+                  }</span></td>
+                  <td class="fw-bold text-primary">+${parseFloat(
+                    item.qty
+                  ).toLocaleString()} dona</td>
+                  <td class="text-summa">${parseFloat(
+                    item.jami_summa || item.qty * (item.price || 0)
+                  ).toLocaleString()} so'm</td>
+                </tr>`
+                )
+                .join("");
+            } else {
+              table.innerHTML =
+                "<tr><td colspan='5' class='py-5'>Ma'lumot topilmadi.</td></tr>";
+            }
+          });
+        });
+      }
+
+      db.ref("asmo_all_history").on("value", updateUI);
+      db.ref("asmo_logistika_history").on("value", updateUI);
+    </script>
+  </body>
+</html>

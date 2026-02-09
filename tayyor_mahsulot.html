@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="uz">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ASMO AVTO - Tayyor Mahsulot Ombori</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="config.js"></script>
+    <style>
+      body {
+        background-color: #f0f2f5;
+        font-family: "Segoe UI", sans-serif;
+      }
+      .card-ready {
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+      }
+      .product-badge {
+        background: #20c997;
+        color: white;
+        padding: 10px;
+        border-radius: 10px;
+        text-align: center;
+      }
+      .section-title {
+        font-size: 0.8rem;
+        font-weight: bold;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container py-4">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold text-dark">📦 Tayyor Mahsulot Ombori</h3>
+        <a href="ombor.html" class="btn btn-outline-secondary btn-sm"
+          >Xomashyo Omboriga o'tish</a
+        >
+      </div>
+
+      <span class="section-title">✨ SOTUVGA TAYYOR MAHSULOTLAR</span>
+      <div id="ready-inventory" class="row g-3 mb-4 mt-1">
+        <div class="col-12 text-center">Yuklanmoqda...</div>
+      </div>
+
+      <div class="card card-ready p-4">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="section-title">Amaliyot Turi</label>
+            <select
+              id="op-type"
+              class="form-select border-primary"
+              onchange="updateUI()"
+            >
+              <option value="Sexdan Qabul">
+                📥 SEXDAN QABUL QILISH (Kirim)
+              </option>
+              <option value="Sotuv">📤 MIJOZGA SOTUV (Chiqim)</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="section-title">Mahsulot Nomi (Model)</label>
+            <input
+              type="text"
+              id="m-name"
+              class="form-control"
+              placeholder="Masalan: Gentra Chexol"
+            />
+          </div>
+          <div class="col-md-4">
+            <label class="section-title">Miqdor (Dona)</label>
+            <input
+              type="number"
+              id="m-qty"
+              class="form-control fw-bold"
+              placeholder="0"
+            />
+          </div>
+          <div class="col-md-4" id="price-box" style="display: none">
+            <label class="section-title text-success"
+              >Sotuv Narxi ($ yoki so'm)</label
+            >
+            <input
+              type="number"
+              id="m-price"
+              class="form-control border-success"
+              placeholder="0.00"
+            />
+          </div>
+          <div class="col-md-4">
+            <label class="section-title" id="client-label"
+              >Kimdan keldi? (Sex)</label
+            >
+            <input
+              type="text"
+              id="m-info"
+              class="form-control"
+              placeholder="..."
+            />
+          </div>
+          <div class="col-12 mt-3">
+            <button
+              class="btn btn-success w-100 py-3 fw-bold shadow"
+              onclick="saveReadyProduct()"
+            >
+              TASDIQLASH
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card card-ready p-4 mt-4">
+        <span class="section-title mb-3">🕒 OXIRGI SOTUV VA QABULLAR</span>
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead class="table-light small text-uppercase">
+              <tr>
+                <th>Sana</th>
+                <th>Tur</th>
+                <th>Mahsulot</th>
+                <th>Dona</th>
+                <th>Narxi</th>
+                <th>Izoh</th>
+              </tr>
+            </thead>
+            <tbody id="ready-history" class="small"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // 1. UI YANGILASH (Sotuvda narx chiqadi)
+      function updateUI() {
+        const type = document.getElementById("op-type").value;
+        document.getElementById("price-box").style.display =
+          type === "Sotuv" ? "block" : "none";
+        document.getElementById("client-label").innerText =
+          type === "Sotuv" ? "Mijoz ismi / Do'kon" : "Kimdan keldi? (Sex)";
+      }
+
+      // 2. BAZAGA YOZISH
+      function saveReadyProduct() {
+        const type = document.getElementById("op-type").value;
+        const name = document
+          .getElementById("m-name")
+          .value.trim()
+          .toUpperCase();
+        const qty = parseInt(document.getElementById("m-qty").value);
+        const price = document.getElementById("m-price").value || 0;
+        const info = document.getElementById("m-info").value;
+
+        if (!name || !qty) return alert("Ma'lumotlarni to'ldiring!");
+
+        const balanceRef = db.ref("asmo_ready_balance/" + name);
+
+        balanceRef.once("value").then((snap) => {
+          const current = snap.val() || 0;
+          if (type === "Sotuv" && qty > current)
+            return alert("Omborda yetarli mahsulot yo'q!");
+
+          balanceRef
+            .transaction((val) => {
+              return type === "Sexdan Qabul"
+                ? (val || 0) + qty
+                : (val || 0) - qty;
+            })
+            .then(() => {
+              db.ref("asmo_ready_records").push({
+                time: new Date().toLocaleString(),
+                type: type,
+                name: name,
+                qty: qty,
+                price: price,
+                info: info,
+              });
+              alert("Muvaffaqiyatli!");
+              document.getElementById("m-name").value = "";
+              document.getElementById("m-qty").value = "";
+            });
+        });
+      }
+
+      // 3. REAL-TIME QOLDIQ VA TARIX
+      function loadData() {
+        db.ref("asmo_ready_balance").on("value", (snap) => {
+          const container = document.getElementById("ready-inventory");
+          container.innerHTML = "";
+          snap.forEach((item) => {
+            container.innerHTML += `
+                    <div class="col-6 col-md-3">
+                        <div class="product-badge shadow-sm">
+                            <small class="d-block" style="font-size: 10px; opacity: 0.8">${
+                              item.key
+                            }</small>
+                            <h4 class="m-0">${item.val()} dona</h4>
+                        </div>
+                    </div>`;
+          });
+        });
+
+        db.ref("asmo_ready_records")
+          .limitToLast(10)
+          .on("value", (snap) => {
+            const tbody = document.getElementById("ready-history");
+            tbody.innerHTML = "";
+            const data = [];
+            snap.forEach((child) => {
+              data.unshift(child.val());
+            });
+            data.forEach((rec) => {
+              tbody.innerHTML += `
+                    <tr>
+                        <td>${rec.time}</td>
+                        <td><span class="badge ${
+                          rec.type.includes("Sotuv")
+                            ? "bg-danger"
+                            : "bg-success"
+                        }">${rec.type}</span></td>
+                        <td class="fw-bold">${rec.name}</td>
+                        <td>${rec.qty}</td>
+                        <td>${rec.price > 0 ? "$" + rec.price : "-"}</td>
+                        <td>${rec.info}</td>
+                    </tr>`;
+            });
+          });
+      }
+
+      loadData();
+    </script>
+  </body>
+</html>

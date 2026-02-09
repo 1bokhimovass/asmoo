@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="uz">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ASMO AVTO - Ombor Tizimi</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="config.js"></script>
+    <style>
+      body {
+        background-color: #f4f7f6;
+        font-family: "Inter", sans-serif;
+      }
+      .card-custom {
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        background: white;
+        margin-bottom: 20px;
+      }
+      .back-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 42px;
+        height: 42px;
+        background: white;
+        color: #333;
+        text-decoration: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+        transition: all 0.2s ease;
+        border: none;
+        margin-right: 15px;
+      }
+      .back-btn:hover {
+        background: #f8f9fa;
+        transform: scale(1.05);
+        color: #000;
+      }
+      .calc-input {
+        background-color: #eef2f7 !important;
+        font-weight: bold;
+        color: #2c3e50;
+        border: 2px solid #dee2e6;
+      }
+      .calc-result {
+        background-color: #fff9db !important;
+        border: 2px solid #fab005 !important;
+        font-weight: 800;
+        color: #e67e22;
+      }
+      .section-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #adb5bd;
+        text-transform: uppercase;
+        margin-bottom: 5px;
+        display: block;
+      }
+      .inventory-card {
+        border-radius: 10px;
+        border-left: 5px solid #228be6;
+        padding: 15px;
+        background: white;
+        height: 100%;
+      }
+      #live-clock {
+        font-size: 0.9rem;
+        padding: 8px 12px;
+        border-radius: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container py-4">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center">
+          <a href="index.html" class="back-btn">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              fill="currentColor"
+              viewBox="0 0 16 16"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"
+              />
+            </svg>
+          </a>
+          <h4 class="fw-bold m-0">Ombor hisobi</h4>
+        </div>
+        <div id="live-clock" class="badge bg-dark"></div>
+      </div>
+
+      <span class="section-label">JORIY ZAXIRA</span>
+      <div id="inventory-cards" class="row g-2 mb-4"></div>
+
+      <div class="card card-custom p-4">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="section-label">Amaliyot turi</label>
+            <select
+              id="main-type"
+              class="form-select fw-bold border-primary shadow-sm"
+              onchange="updateUI()"
+            >
+              <option value="Xomashyo Kirim">XOMASHYO KIRIM</option>
+              <option value="Xomashyo Chiqim">
+                Ombordan chiqim (ishlab chiqarishga)
+              </option>
+            </select>
+          </div>
+
+          <div class="col-md-4">
+            <label class="section-label">Xomashyo Nomi</label>
+            <input
+              type="text"
+              id="product"
+              class="form-control fw-bold"
+              oninput="checkCurrentStock()"
+            />
+            <div id="stock-hint" class="small fw-bold text-primary mt-1"></div>
+          </div>
+
+          <div id="calculation-section" class="row g-3 mt-1">
+            <div class="col-6 col-md-3">
+              <label class="section-label text-primary">O'rin (Quti)</label>
+              <input
+                type="number"
+                id="urin"
+                class="form-control calc-input"
+                oninput="calculateExcel()"
+              />
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="section-label">1 quti o'lchami</label>
+              <input
+                type="text"
+                id="box_size"
+                class="form-control"
+                oninput="calculateExcel()"
+              />
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="section-label">1 quti KG</label>
+              <input
+                type="number"
+                id="box_kg"
+                class="form-control"
+                oninput="calculateExcel()"
+              />
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="section-label">miqdori (dona)</label>
+              <input
+                type="number"
+                id="box_inner_qty"
+                class="form-control"
+                oninput="calculateExcel()"
+              />
+            </div>
+          </div>
+
+          <div id="simple-qty-section" class="col-md-4" style="display: none">
+            <label class="section-label">Miqdori (Dona)</label>
+            <input type="number" id="simple_qty" class="form-control" />
+          </div>
+
+          <div class="row g-3 mt-1" id="results-section">
+            <div class="col-md-4 kirim-detail">
+              <label class="section-label">kuba yig'indisi</label>
+              <input
+                type="text"
+                id="kuba"
+                class="form-control calc-result"
+                readonly
+              />
+            </div>
+            <div class="col-md-4 kirim-detail">
+              <label class="section-label">kg yig'indisi</label>
+              <input
+                type="text"
+                id="total_kg"
+                class="form-control calc-result"
+                readonly
+              />
+            </div>
+            <div class="col-md-4 kirim-detail">
+              <label class="section-label">umumiy miqdor</label>
+              <input
+                type="text"
+                id="final_qty"
+                class="form-control calc-result"
+                readonly
+              />
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="section-label">Mas'ul shaxs (Omborchi)</label>
+            <input type="text" id="responsible" class="form-control" />
+          </div>
+          <div class="col-md-6">
+            <label id="transport-label" class="section-label">Transport</label>
+            <input type="text" id="transport" class="form-control" />
+          </div>
+
+          <div class="col-12">
+            <button
+              class="btn btn-primary w-100 fw-bold py-3 shadow"
+              onclick="processTransaction()"
+            >
+              TASDIQLASH
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card card-custom p-4">
+        <span id="history-title" class="section-label mb-3 text-primary"
+          >📜 AMALIYOTLAR TARIXI</span
+        >
+        <div class="table-responsive">
+          <table class="table table-hover align-middle small">
+            <thead id="dynamic-head" class="table-light"></thead>
+            <tbody id="dynamic-history-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function updateUI() {
+        const type = document.getElementById("main-type").value;
+        const isKirim = type === "Xomashyo Kirim";
+
+        // Bo'limlarni ko'rsatish/yashirish
+        document.getElementById("calculation-section").style.display = isKirim
+          ? "flex"
+          : "none";
+        document
+          .querySelectorAll(".kirim-detail")
+          .forEach((el) => (el.style.display = isKirim ? "block" : "none"));
+        document.getElementById("simple-qty-section").style.display = isKirim
+          ? "none"
+          : "block";
+
+        // LABELLARNI O'ZGARTIRISH (Siz so'ragan joy)
+        const transportLabel = document.getElementById("transport-label");
+        if (isKirim) {
+          transportLabel.innerText = "Transport";
+        } else {
+          transportLabel.innerText = "Oluvchi";
+        }
+
+        refreshHistoryView();
+        resetForm();
+      }
+
+      function calculateExcel() {
+        const urin = parseFloat(document.getElementById("urin").value) || 0;
+        const bSize =
+          parseFloat(document.getElementById("box_size").value) || 0;
+        const bKg = parseFloat(document.getElementById("box_kg").value) || 0;
+        const bInner =
+          parseFloat(document.getElementById("box_inner_qty").value) || 0;
+
+        document.getElementById("kuba").value = (urin * bSize).toFixed(3);
+        document.getElementById("total_kg").value = (urin * bKg).toFixed(2);
+        document.getElementById("final_qty").value = urin * bInner;
+      }
+
+      function processTransaction() {
+        const type = document.getElementById("main-type").value;
+        const product = document
+          .getElementById("product")
+          .value.trim()
+          .toUpperCase();
+        const resp = document.getElementById("responsible").value;
+        const transportOrReceiver = document.getElementById("transport").value;
+
+        let finalQty =
+          type === "Xomashyo Kirim"
+            ? parseFloat(document.getElementById("final_qty").value)
+            : parseFloat(document.getElementById("simple_qty").value);
+
+        if (!product || !finalQty || finalQty <= 0 || !resp)
+          return alert("Ma'lumotlar to'liq emas!");
+
+        const balanceRef = db.ref("asmo_inventory_balance/" + product);
+        balanceRef.once("value").then((snapshot) => {
+          const current = snapshot.val() || 0;
+          if (type.includes("Chiqim") && finalQty > current)
+            return alert("Omborda yetarli qoldiq yo'q!");
+
+          balanceRef
+            .transaction((val) =>
+              type.includes("Kirim")
+                ? (val || 0) + finalQty
+                : (val || 0) - finalQty
+            )
+            .then(() => {
+              db.ref("asmo_ombor_records").push({
+                time: new Date().toLocaleString("uz-UZ"),
+                type: type,
+                product: product,
+                qty: finalQty,
+                kuba: type.includes("Kirim")
+                  ? document.getElementById("kuba").value
+                  : "-",
+                kg: type.includes("Kirim")
+                  ? document.getElementById("total_kg").value
+                  : "-",
+                responsible: resp,
+                transport: transportOrReceiver, // Bu yerda interfeysdagi 'Oluvchi' qiymati ketadi
+              });
+              alert("Bajarildi!");
+              resetForm();
+            });
+        });
+      }
+
+      function checkCurrentStock() {
+        const prod = document
+          .getElementById("product")
+          .value.trim()
+          .toUpperCase();
+        if (prod) {
+          db.ref("asmo_inventory_balance/" + prod).once("value", (snap) => {
+            document.getElementById("stock-hint").innerText = snap.exists()
+              ? "Omborda: " + snap.val().toLocaleString() + " dona"
+              : "Yangi mahsulot";
+          });
+        }
+      }
+
+      function listenToInventory() {
+        db.ref("asmo_inventory_balance").on("value", (snap) => {
+          const container = document.getElementById("inventory-cards");
+          container.innerHTML = "";
+          const data = snap.val();
+          for (let key in data) {
+            container.innerHTML += `<div class="col-6 col-md-3"><div class="inventory-card">
+              <small class="section-label">${key}</small>
+              <h4 class="m-0 fw-bold text-primary">${data[
+                key
+              ].toLocaleString()}</h4>
+            </div></div>`;
+          }
+        });
+      }
+
+      function refreshHistoryView() {
+        const type = document.getElementById("main-type").value;
+        const isKirim = type === "Xomashyo Kirim";
+        const head = document.getElementById("dynamic-head");
+        const title = document.getElementById("history-title");
+
+        if (isKirim) {
+          title.innerText = "OXIRGI KIRIMLAR";
+          title.className = "section-label mb-3 text-success";
+          head.innerHTML = `<tr><th>Vaqt</th><th>Nomi</th><th>Kuba</th><th>KG</th><th>Dona</th><th>Transport</th></tr>`;
+        } else {
+          title.innerText = "OXIRGI CHIQIMLAR";
+          title.className = "section-label mb-3 text-danger";
+          head.innerHTML = `<tr><th>Vaqt</th><th>Nomi</th><th>Dona</th><th>Mas'ul</th><th>Oluvchi</th></tr>`;
+        }
+
+        db.ref("asmo_ombor_records")
+          .limitToLast(30)
+          .once("value", (snap) => {
+            renderFilteredTable(snap.val(), type);
+          });
+      }
+
+      function renderFilteredTable(data, currentType) {
+        const body = document.getElementById("dynamic-history-body");
+        body.innerHTML = "";
+        if (!data) return;
+        Object.keys(data)
+          .reverse()
+          .forEach((key) => {
+            const r = data[key];
+            if (r.type === currentType) {
+              const timeOnly = r.time.split(",")[1] || r.time;
+              if (currentType === "Xomashyo Kirim") {
+                body.innerHTML += `<tr><td>${timeOnly}</td><td class="fw-bold">${
+                  r.product
+                }</td><td>${r.kuba} m³</td><td>${
+                  r.kg
+                } kg</td><td class="text-success fw-bold">+${r.qty}</td><td>${
+                  r.transport || "-"
+                }</td></tr>`;
+              } else {
+                body.innerHTML += `<tr><td>${timeOnly}</td><td class="fw-bold">${
+                  r.product
+                }</td><td class="text-danger fw-bold">-${r.qty}</td><td>${
+                  r.responsible
+                }</td><td>${r.transport || "-"}</td></tr>`;
+              }
+            }
+          });
+      }
+
+      function listenToHistory() {
+        db.ref("asmo_ombor_records").on("value", () => {
+          refreshHistoryView();
+        });
+      }
+
+      function resetForm() {
+        [
+          "product",
+          "urin",
+          "box_size",
+          "box_kg",
+          "box_inner_qty",
+          "simple_qty",
+          "responsible",
+          "transport",
+          "kuba",
+          "total_kg",
+          "final_qty",
+        ].forEach((id) => {
+          const el = document.getElementById(id);
+          if (el) el.value = "";
+        });
+        document.getElementById("stock-hint").innerText = "";
+      }
+
+      // Initial Call
+      updateUI();
+      listenToInventory();
+      listenToHistory();
+      setInterval(() => {
+        const clockEl = document.getElementById("live-clock");
+        if (clockEl) clockEl.innerText = new Date().toLocaleTimeString();
+      }, 1000);
+    </script>
+  </body>
+</html>
