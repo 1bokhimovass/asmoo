@@ -6,115 +6,86 @@
     <title>Direktor Paneli - ASMO AVTO</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="config.js"></script>
 
     <style>
-      body { 
-        background-color: #f4f7f9; 
-        font-family: 'Inter', system-ui, -apple-system, sans-serif; 
-        color: #333;
-      }
+      body { background-color: #f8fafc; font-family: 'Inter', sans-serif; color: #1e293b; }
       
       .header-nav { 
-        background: #ffffff; 
-        padding: 15px 0; 
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); 
-        margin-bottom: 20px; 
-        border-radius: 0 0 15px 15px;
+        background: #ffffff; padding: 15px 0; 
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 25px;
       }
 
       .section-title { 
-        font-weight: 700; 
-        color: #1a202c; 
-        margin: 30px 0 15px 0; 
-        text-transform: uppercase; 
-        font-size: 0.75rem; 
-        letter-spacing: 1.2px; 
-        border-left: 4px solid #0056b3; 
-        padding-left: 12px;
+        font-weight: 800; color: #334155; margin: 35px 0 15px 0; 
+        text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px;
+        display: flex; align-items: center;
+      }
+      .section-title::before {
+        content: ""; width: 4px; height: 18px; background: #0056b3;
+        margin-right: 10px; border-radius: 10px;
       }
 
-      /* Moslashuvchan Kontener */
+      /* Ombor Kartalari Uchun Grid */
       #xomashyo-container {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px; /* Kartalar orasidagi masofa */
+        display: flex; flex-wrap: wrap; gap: 12px;
       }
 
-      /* Aqlli Karta: Uzunlikka qarab o'zi kengayadi */
-      .card-wrapper {
-        flex: 1 1 calc(50% - 12px); /* Default: yonma-yon 2 ta */
-        min-width: 140px; /* Minimal kenglik */
-      }
+      .card-wrapper { flex: 1 1 calc(50% - 12px); min-width: 150px; }
+      
+      /* Nomi uzun mahsulotlar uchun aqlli kengayish */
+      .is-long { flex: 1 1 100% !important; }
 
       .card-xomashyo { 
-        border-radius: 16px; 
-        border: none; 
-        padding: 20px 15px; 
-        color: white; 
-        background: linear-gradient(135deg, #1e3c72, #2a5298); 
-        box-shadow: 0 6px 15px rgba(30, 60, 114, 0.15);
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        text-align: center;
+        background: white; border-radius: 18px; padding: 16px;
+        border: 1px solid #e2e8f0; position: relative;
+        transition: all 0.2s ease; height: 100%;
+        display: flex; flex-direction: column; justify-content: space-between;
       }
-      
+
+      /* Mahsulot ID/Nomi uchun yorliq */
       .card-xomashyo small {
-        font-size: 0.7rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        margin-bottom: 8px;
-        line-height: 1.3;
-        display: block;
-        word-wrap: break-word; /* Uzun so'zlarni bo'ladi */
+        background: #f1f5f9; color: #475569; padding: 5px 10px;
+        border-radius: 8px; font-size: 0.65rem; font-weight: 700;
+        display: inline-block; margin-bottom: 12px;
+        word-break: break-all; line-height: 1.2;
       }
 
       .card-xomashyo h3 {
-        font-size: 1.6rem;
-        font-weight: 800;
-        margin: 0;
+        font-size: 1.8rem; font-weight: 800; margin: 0;
+        color: #0f172a; text-align: right;
       }
 
-      .low-stock { 
-        background: linear-gradient(135deg, #ff416c, #ff4b2b) !important; 
-      }
+      /* Kam qolgan mahsulot */
+      .low-stock { border-left: 5px solid #ef4444; background: #fff1f2; }
+      .low-stock h3 { color: #ef4444; }
 
       /* Zavod kartalari */
       .card-custom { 
-        border-radius: 20px; 
-        border: none; 
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04); 
-        background: white; 
-        padding: 24px; 
-        position: relative;
-        margin-bottom: 10px;
+        border-radius: 20px; border: none; padding: 20px;
+        background: white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        position: relative; border: 1px solid #e2e8f0;
       }
 
-      .total-value { font-size: 2.2rem; font-weight: 800; line-height: 1; }
-
+      .total-value { font-size: 2rem; font-weight: 800; color: #1e3c72; }
+      
       .status-box { 
-        position: absolute; top: 20px; right: 20px; 
-        font-size: 0.7rem; font-weight: 700;
-        padding: 4px 8px; border-radius: 8px; background: #f8f9fa;
+        position: absolute; top: 15px; right: 15px; font-size: 0.65rem; 
+        font-weight: 800; padding: 4px 8px; border-radius: 6px; background: #f8fafc;
       }
 
-      @media (max-width: 576px) {
-        /* Nomi uzun kartalar uchun maxsus klass (JS orqali qo'shiladi) */
-        .is-long {
-          flex: 1 1 100% !important; /* Butun qatorni egallaydi */
-        }
-      }
+      .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+      .dot-onway { background: #f59e0b; animation: blink 1s infinite; }
+      .dot-delivered { background: #10b981; }
+      @keyframes blink { 50% { opacity: 0.3; } }
 
-      .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
-      .dot-onway { background: #f39c12; animation: blink 1s infinite; }
-      .dot-delivered { background: #27ae60; }
-      @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+      @media (max-width: 480px) {
+        .total-value { font-size: 1.7rem; }
+      }
     </style>
   </head>
   <body>
@@ -122,66 +93,56 @@
     <div class="header-nav">
       <div class="container d-flex justify-content-between align-items-center">
         <div>
-          <h5 class="fw-bold m-0" style="color: #0043a8;">ASMO AVTO</h5>
-          <small class="text-muted" style="font-size: 0.7rem;">Direktor Nazorati</small>
+          <h5 class="fw-bold m-0" style="color: #0056b3;">ASMO AVTO</h5>
+          <small class="text-muted fw-bold" style="font-size: 0.65rem;">DIREKTOR NAZORATI</small>
         </div>
-        <button onclick="logout()" class="btn btn-sm btn-outline-danger px-3" style="border-radius: 10px;">Chiqish</button>
+        <button onclick="logout()" class="btn btn-sm btn-danger px-3 fw-bold" style="border-radius: 8px; font-size: 0.75rem;">CHIQUV</button>
       </div>
     </div>
 
     <div class="container pb-5">
-      <div class="section-title">📦 OMBOR QOLDIQLARI</div>
+      <div class="section-title">Ombor qoldiqlari</div>
       <div id="xomashyo-container">
-        <div class="w-100 text-center text-muted py-4">Yuklanmoqda...</div>
+        <div class="w-100 text-center py-4 text-muted">Yuklanmoqda...</div>
       </div>
 
-      <div class="section-title">🚛 ZAVODLARGA YUBORILGAN</div>
+      <div class="section-title">Zavodlarga yuborilgan</div>
       <div class="row g-3">
         <div class="col-12 col-md-4">
           <div class="card card-custom">
-            <div id="status-gore" class="status-box"></div>
-            <div class="text-primary fw-bold small mb-2">GORE-TEX PATCH</div>
+            <div id="status-gore" class="status-box">...</div>
+            <div class="text-muted fw-bold small mb-1">GORE-TEX PATCH</div>
             <div class="d-flex justify-content-between align-items-end">
-              <div class="border-start border-3 ps-3" style="border-color: #0d6efd !important">
-                <small class="text-muted d-block mb-1" style="font-size: 0.65rem">OXIRGI JO'NATMA</small>
-                <div id="text-gore" class="fw-bold" style="font-size: 0.85rem">...</div>
-              </div>
-              <div id="total-gore" class="total-value text-primary">0</div>
+              <div id="text-gore" class="fw-bold text-secondary" style="font-size: 0.8rem">...</div>
+              <div id="total-gore" class="total-value">0</div>
             </div>
           </div>
         </div>
         <div class="col-12 col-md-4">
-            <div class="card card-custom">
-              <div id="status-led" class="status-box"></div>
-              <div class="fw-bold small mb-2" style="color: #6f42c1">LED PCB</div>
-              <div class="d-flex justify-content-between align-items-end">
-                <div class="border-start border-3 ps-3" style="border-color: #6f42c1 !important">
-                  <small class="text-muted d-block mb-1" style="font-size: 0.65rem">OXIRGI JO'NATMA</small>
-                  <div id="text-led" class="fw-bold" style="font-size: 0.85rem">...</div>
-                </div>
-                <div id="total-led" class="total-value" style="color: #6f42c1">0</div>
-              </div>
+          <div class="card card-custom">
+            <div id="status-led" class="status-box">...</div>
+            <div class="text-muted fw-bold small mb-1">LED PCB</div>
+            <div class="d-flex justify-content-between align-items-end">
+              <div id="text-led" class="fw-bold text-secondary" style="font-size: 0.8rem">...</div>
+              <div id="total-led" class="total-value" style="color: #6f42c1">0</div>
             </div>
           </div>
-  
-          <div class="col-12 col-md-4">
-            <div class="card card-custom">
-              <div id="status-switch" class="status-box"></div>
-              <div class="text-success fw-bold small mb-2">AVTO SWITCH</div>
-              <div class="d-flex justify-content-between align-items-end">
-                <div class="border-start border-3 ps-3" style="border-color: #198754 !important">
-                  <small class="text-muted d-block mb-1" style="font-size: 0.65rem">OXIRGI JO'NATMA</small>
-                  <div id="text-switch" class="fw-bold" style="font-size: 0.85rem">...</div>
-                </div>
-                <div id="total-switch" class="total-value text-success">0</div>
-              </div>
+        </div>
+        <div class="col-12 col-md-4">
+          <div class="card card-custom">
+            <div id="status-switch" class="status-box">...</div>
+            <div class="text-muted fw-bold small mb-1">AVTO SWITCH</div>
+            <div class="d-flex justify-content-between align-items-end">
+              <div id="text-switch" class="fw-bold text-secondary" style="font-size: 0.8rem">...</div>
+              <div id="total-switch" class="total-value" style="color: #198754">0</div>
             </div>
           </div>
+        </div>
       </div>
     </div>
 
     <script>
-      // XAVFSIZLIK
+      // 1. XAVFSIZLIK
       auth.onAuthStateChanged((user) => {
         if (!user || user.email !== "direktor@asmo.uz") {
           window.location.href = "login.html";
@@ -189,37 +150,40 @@
       });
 
       function logout() {
-        if (confirm("Tizimdan chiqmoqchimisiz?")) {
+        if (confirm("Chiqmoqchimisiz?")) {
           auth.signOut().then(() => { window.location.href = "login.html"; });
         }
       }
 
-      // OMBOR MA'LUMOTLARI - AQLLI LOGIKA
+      // 2. OMBOR MA'LUMOTLARI (AQLLI LOGIKA)
       db.ref("asmo_inventory_balance").on("value", (snap) => {
         const container = document.getElementById("xomashyo-container");
         if (!container) return;
         container.innerHTML = "";
         const data = snap.val();
+        
         if (data) {
           Object.entries(data).forEach(([name, qty]) => {
-            const isLow = qty < 100;
-            // Nomi 15 ta belgidan uzun bo'lsa 'is-long' klassini qo'shamiz
-            const isLongName = name.length > 15;
+            const isLow = qty < 50;
+            
+            // Xunuk ID-larni tozalash (STOCK_GORE_... -> GORE ...)
+            const displayName = name.replace("STOCK_", "").replace(/_/g, " ");
+            const isLongName = displayName.length > 18;
             
             const wrapper = document.createElement("div");
             wrapper.className = `card-wrapper ${isLongName ? 'is-long' : ''}`;
             
             wrapper.innerHTML = `
               <div class="card-xomashyo ${isLow ? 'low-stock' : ''}">
-                <small>${name.toUpperCase()}</small>
-                <h3>${qty.toLocaleString()}</h3>
+                <small>${displayName}</small>
+                <h3>${Number(qty).toLocaleString()}</h3>
               </div>`;
             container.appendChild(wrapper);
           });
         }
       });
 
-      // JO'NATMALAR STATISTIKASI (Oldingi kod bilan bir xil)
+      // 3. JO'NATMALAR STATISTIKASI
       db.ref("asmo_zavod_shippings").on("value", (snap) => {
         const data = snap.val();
         let sums = { "GORE-TEX PATCH": 0, "LED PCB": 0, "AVTO SWITCH": 0 };
@@ -247,7 +211,9 @@
         const totalEl = document.getElementById("total-" + prefix);
         const textEl = document.getElementById("text-" + prefix);
         const statusEl = document.getElementById("status-" + prefix);
+        
         if (totalEl) totalEl.innerText = sums[key].toLocaleString();
+        
         const item = last[key];
         if (item) {
           if (textEl) textEl.innerText = item.qty + " ta ➔ " + (item.zavod || "Zavod");
@@ -256,6 +222,8 @@
               ? '<span class="text-success"><span class="status-dot dot-delivered"></span>OK</span>'
               : '<span class="text-warning"><span class="status-dot dot-onway"></span>Yo\'lda</span>';
           }
+        } else {
+          if (textEl) textEl.innerText = "Mavjud emas";
         }
       }
     </script>
