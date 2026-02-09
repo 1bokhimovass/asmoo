@@ -5,136 +5,184 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Direktor Paneli - ASMO AVTO</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-    
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="config.js"></script>
 
     <style>
-      body { background-color: #f8fafc; font-family: 'Inter', sans-serif; color: #1e293b; }
-      
-      .header-nav { 
-        background: #ffffff; padding: 15px 0; 
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 25px;
+      body {
+        background-color: #f0f2f5;
+        font-family: "Segoe UI", sans-serif;
       }
-
-      .section-title { 
-        font-weight: 800; color: #334155; margin: 35px 0 15px 0; 
-        text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px;
-        display: flex; align-items: center;
+      .header-nav {
+        background: white;
+        padding: 15px 0;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        margin-bottom: 25px;
+        border-radius: 0 0 20px 20px;
       }
-      .section-title::before {
-        content: ""; width: 4px; height: 18px; background: #0056b3;
-        margin-right: 10px; border-radius: 10px;
+      .section-title {
+        font-weight: 800;
+        color: #333;
+        margin: 25px 0 15px 0;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 1px;
+        border-left: 4px solid #0043a8;
+        padding-left: 10px;
       }
-
-      /* Ombor Kartalari Uchun Grid */
-      #xomashyo-container {
-        display: flex; flex-wrap: wrap; gap: 12px;
+      .card-xomashyo {
+        border-radius: 12px;
+        border: none;
+        padding: 15px;
+        color: white;
+        background: linear-gradient(45deg, #1e3c72, #2a5298);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
       }
-
-      .card-wrapper { flex: 1 1 calc(50% - 12px); min-width: 150px; }
-      
-      /* Nomi uzun mahsulotlar uchun aqlli kengayish */
-      .is-long { flex: 1 1 100% !important; }
-
-      .card-xomashyo { 
-        background: white; border-radius: 18px; padding: 16px;
-        border: 1px solid #e2e8f0; position: relative;
-        transition: all 0.2s ease; height: 100%;
-        display: flex; flex-direction: column; justify-content: space-between;
+      .low-stock {
+        background: linear-gradient(45deg, #e74c3c, #c0392b) !important;
       }
-
-      /* Mahsulot ID/Nomi uchun yorliq */
-      .card-xomashyo small {
-        background: #f1f5f9; color: #475569; padding: 5px 10px;
-        border-radius: 8px; font-size: 0.65rem; font-weight: 700;
-        display: inline-block; margin-bottom: 12px;
-        word-break: break-all; line-height: 1.2;
+      .card-custom {
+        border-radius: 20px;
+        border: none;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        background: white;
+        padding: 20px;
+        position: relative;
       }
-
-      .card-xomashyo h3 {
-        font-size: 1.8rem; font-weight: 800; margin: 0;
-        color: #0f172a; text-align: right;
+      .total-value {
+        font-size: 2.2rem;
+        font-weight: 900;
+        line-height: 1;
       }
-
-      /* Kam qolgan mahsulot */
-      .low-stock { border-left: 5px solid #ef4444; background: #fff1f2; }
-      .low-stock h3 { color: #ef4444; }
-
-      /* Zavod kartalari */
-      .card-custom { 
-        border-radius: 20px; border: none; padding: 20px;
-        background: white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-        position: relative; border: 1px solid #e2e8f0;
+      .status-box {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        font-size: 0.65rem;
+        font-weight: 800;
       }
-
-      .total-value { font-size: 2rem; font-weight: 800; color: #1e3c72; }
-      
-      .status-box { 
-        position: absolute; top: 15px; right: 15px; font-size: 0.65rem; 
-        font-weight: 800; padding: 4px 8px; border-radius: 6px; background: #f8fafc;
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 4px;
       }
-
-      .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
-      .dot-onway { background: #f59e0b; animation: blink 1s infinite; }
-      .dot-delivered { background: #10b981; }
-      @keyframes blink { 50% { opacity: 0.3; } }
-
-      @media (max-width: 480px) {
-        .total-value { font-size: 1.7rem; }
+      .dot-onway {
+        background: #f39c12;
+        animation: blink 1s infinite;
+      }
+      .dot-delivered {
+        background: #27ae60;
+      }
+      @keyframes blink {
+        0% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.3;
+        }
+        100% {
+          opacity: 1;
+        }
       }
     </style>
   </head>
   <body>
-
     <div class="header-nav">
       <div class="container d-flex justify-content-between align-items-center">
         <div>
-          <h5 class="fw-bold m-0" style="color: #0056b3;">ASMO AVTO</h5>
-          <small class="text-muted fw-bold" style="font-size: 0.65rem;">DIREKTOR NAZORATI</small>
+          <h5 class="fw-bold m-0 text-primary">ASMO AVTO</h5>
+          <small class="text-muted">Direktor Boshqaruv Paneli</small>
         </div>
-        <button onclick="logout()" class="btn btn-sm btn-danger px-3 fw-bold" style="border-radius: 8px; font-size: 0.75rem;">CHIQUV</button>
+        <div>
+          <button onclick="logout()" class="btn btn-sm btn-danger">
+            🚪 Chiqish
+          </button>
+        </div>
       </div>
     </div>
 
     <div class="container pb-5">
-      <div class="section-title">Ombor qoldiqlari</div>
-      <div id="xomashyo-container">
-        <div class="w-100 text-center py-4 text-muted">Yuklanmoqda...</div>
+      <div class="section-title">📦 OMBORDAGI XOMASHYO QOLDIQLARI</div>
+      <div id="xomashyo-container" class="row g-3 mb-5">
+        <div class="col-12 text-center text-muted py-3">Yuklanmoqda...</div>
       </div>
 
-      <div class="section-title">Zavodlarga yuborilgan</div>
+      <div class="section-title">🚛 ZAVODLARGA YUBORILGAN MAHSULOTLAR</div>
       <div class="row g-3">
-        <div class="col-12 col-md-4">
+        <div class="col-md-4">
           <div class="card card-custom">
-            <div id="status-gore" class="status-box">...</div>
-            <div class="text-muted fw-bold small mb-1">GORE-TEX PATCH</div>
-            <div class="d-flex justify-content-between align-items-end">
-              <div id="text-gore" class="fw-bold text-secondary" style="font-size: 0.8rem">...</div>
-              <div id="total-gore" class="total-value">0</div>
+            <div id="status-gore" class="status-box"></div>
+            <div class="product-title text-primary fw-bold small">
+              GORE-TEX PATCH
+            </div>
+            <div class="d-flex justify-content-between align-items-end mt-2">
+              <div
+                class="border-start border-3 ps-2"
+                style="border-color: #0d6efd !important"
+              >
+                <small class="text-muted d-block" style="font-size: 0.65rem"
+                  >OXIRGI JO'NATMA</small
+                >
+                <div id="text-gore" class="fw-bold" style="font-size: 0.8rem">
+                  ...
+                </div>
+              </div>
+              <div id="total-gore" class="total-value text-primary">0</div>
             </div>
           </div>
         </div>
-        <div class="col-12 col-md-4">
+        <div class="col-md-4">
           <div class="card card-custom">
-            <div id="status-led" class="status-box">...</div>
-            <div class="text-muted fw-bold small mb-1">LED PCB</div>
-            <div class="d-flex justify-content-between align-items-end">
-              <div id="text-led" class="fw-bold text-secondary" style="font-size: 0.8rem">...</div>
-              <div id="total-led" class="total-value" style="color: #6f42c1">0</div>
+            <div id="status-led" class="status-box"></div>
+            <div class="product-title fw-bold small" style="color: #6f42c1">
+              LED PCB
+            </div>
+            <div class="d-flex justify-content-between align-items-end mt-2">
+              <div
+                class="border-start border-3 ps-2"
+                style="border-color: #6f42c1 !important"
+              >
+                <small class="text-muted d-block" style="font-size: 0.65rem"
+                  >OXIRGI JO'NATMA</small
+                >
+                <div id="text-led" class="fw-bold" style="font-size: 0.8rem">
+                  ...
+                </div>
+              </div>
+              <div id="total-led" class="total-value" style="color: #6f42c1">
+                0
+              </div>
             </div>
           </div>
         </div>
-        <div class="col-12 col-md-4">
+        <div class="col-md-4">
           <div class="card card-custom">
-            <div id="status-switch" class="status-box">...</div>
-            <div class="text-muted fw-bold small mb-1">AVTO SWITCH</div>
-            <div class="d-flex justify-content-between align-items-end">
-              <div id="text-switch" class="fw-bold text-secondary" style="font-size: 0.8rem">...</div>
-              <div id="total-switch" class="total-value" style="color: #198754">0</div>
+            <div id="status-switch" class="status-box"></div>
+            <div class="product-title text-success fw-bold small">
+              AVTO SWITCH
+            </div>
+            <div class="d-flex justify-content-between align-items-end mt-2">
+              <div
+                class="border-start border-3 ps-2"
+                style="border-color: #198754 !important"
+              >
+                <small class="text-muted d-block" style="font-size: 0.65rem"
+                  >OXIRGI JO'NATMA</small
+                >
+                <div id="text-switch" class="fw-bold" style="font-size: 0.8rem">
+                  ...
+                </div>
+              </div>
+              <div id="total-switch" class="total-value text-success">0</div>
             </div>
           </div>
         </div>
@@ -142,7 +190,7 @@
     </div>
 
     <script>
-      // 1. XAVFSIZLIK
+      // 1. XAVFSIZLIK (Login nazorati)
       auth.onAuthStateChanged((user) => {
         if (!user || user.email !== "direktor@asmo.uz") {
           window.location.href = "login.html";
@@ -150,35 +198,30 @@
       });
 
       function logout() {
-        if (confirm("Chiqmoqchimisiz?")) {
-          auth.signOut().then(() => { window.location.href = "login.html"; });
+        if (confirm("Tizimdan chiqmoqchimisiz?")) {
+          auth.signOut().then(() => {
+            window.location.href = "login.html";
+          });
         }
       }
 
-      // 2. OMBOR MA'LUMOTLARI (AQLLI LOGIKA)
+      // 2. OMBOR QOLDIQLARI
       db.ref("asmo_inventory_balance").on("value", (snap) => {
         const container = document.getElementById("xomashyo-container");
         if (!container) return;
         container.innerHTML = "";
         const data = snap.val();
-        
         if (data) {
           Object.entries(data).forEach(([name, qty]) => {
-            const isLow = qty < 50;
-            
-            // Xunuk ID-larni tozalash (STOCK_GORE_... -> GORE ...)
-            const displayName = name.replace("STOCK_", "").replace(/_/g, " ");
-            const isLongName = displayName.length > 18;
-            
-            const wrapper = document.createElement("div");
-            wrapper.className = `card-wrapper ${isLongName ? 'is-long' : ''}`;
-            
-            wrapper.innerHTML = `
-              <div class="card-xomashyo ${isLow ? 'low-stock' : ''}">
-                <small>${displayName}</small>
-                <h3>${Number(qty).toLocaleString()}</h3>
+            const isLow = qty < 100;
+            const div = document.createElement("div");
+            div.className = "col-md-3 col-6";
+            div.innerHTML = `
+              <div class="card-xomashyo ${isLow ? "low-stock" : ""}">
+                <small class="fw-bold opacity-75" style="font-size: 0.7rem;">${name.toUpperCase()}</small>
+                <h4 class="fw-bold m-0">${qty.toLocaleString()}</h4>
               </div>`;
-            container.appendChild(wrapper);
+            container.appendChild(div);
           });
         }
       });
@@ -187,7 +230,11 @@
       db.ref("asmo_zavod_shippings").on("value", (snap) => {
         const data = snap.val();
         let sums = { "GORE-TEX PATCH": 0, "LED PCB": 0, "AVTO SWITCH": 0 };
-        let last = { "GORE-TEX PATCH": null, "LED PCB": null, "AVTO SWITCH": null };
+        let last = {
+          "GORE-TEX PATCH": null,
+          "LED PCB": null,
+          "AVTO SWITCH": null,
+        };
 
         if (data) {
           Object.values(data).forEach((item) => {
@@ -211,19 +258,21 @@
         const totalEl = document.getElementById("total-" + prefix);
         const textEl = document.getElementById("text-" + prefix);
         const statusEl = document.getElementById("status-" + prefix);
-        
+
         if (totalEl) totalEl.innerText = sums[key].toLocaleString();
-        
+
         const item = last[key];
         if (item) {
-          if (textEl) textEl.innerText = item.qty + " ta ➔ " + (item.zavod || "Zavod");
+          if (textEl)
+            textEl.innerText = item.qty + " ta ➔ " + (item.zavod || "Noma'lum");
           if (statusEl) {
-            statusEl.innerHTML = item.status === "delivered" 
-              ? '<span class="text-success"><span class="status-dot dot-delivered"></span>OK</span>'
-              : '<span class="text-warning"><span class="status-dot dot-onway"></span>Yo\'lda</span>';
+            statusEl.innerHTML =
+              item.status === "delivered"
+                ? '<span class="text-success fw-bold"><span class="status-dot dot-delivered"></span>OK</span>'
+                : '<span class="text-warning fw-bold"><span class="status-dot dot-onway"></span>...</span>';
           }
-        } else {
-          if (textEl) textEl.innerText = "Mavjud emas";
+        } else if (textEl) {
+          textEl.innerText = "Jo'natma yo'q";
         }
       }
     </script>
